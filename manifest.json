@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "상품명 제작소",
+  "version": "1.0.4",
+  "description": "Input값으로 네이버 쇼핑 검색 후 특정 smartstore 페이지 크롤링, 쿠팡 태그 추출",
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  },
+  "permissions": ["scripting", "activeTab", "webRequest"],
+  "host_permissions": [
+    "https://www.coupang.com/*",
+    "https://whale-ecommerce-website.vercel.app/*",
+    "https://namingfactory.ai.kr/*",
+    "https://smartstore.naver.com/*",
+    "https://brand.naver.com/*",
+    "https://search.shopping.naver.com/*",
+    "http://localhost:3000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://whale-ecommerce-website.vercel.app/*",
+        "https://namingfactory.ai.kr/*",
+        "http://localhost:3000/*"
+      ],
+      "js": ["content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["injected.js"],
+      "matches": [
+        "*://whale-ecommerce-website.vercel.app/*",
+        "https://namingfactory.ai.kr/*",
+        "http://localhost:3000/*"
+      ]
+    }
+  ],
+  "action": {
+    "default_title": "store Product Scraper"
+  }
+}
