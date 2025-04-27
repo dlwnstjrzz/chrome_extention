@@ -2,6 +2,265 @@
 let naverKeywords = [];
 let coupangKeywords = [];
 
+// 🧩 쿠키 리스트 정의 (랜덤 삽입용)
+const cookieList = [
+  "NNB=NYZY4O2C2FZGK; SHP_BUCKET_ID=2; nid_inf=842688977; NID_AUT=wRd4y8z+qF0d0hfAtcNUM/1K4ifr8Sz67TDf6WTVjcueIIWP5i/pTuc7cRhgUDdq; NID_SES=AAABi4q9W3PQOge4Moyu36j8lEh9HHzXs83QDUpFkZaVCOV2YJS6hg8A4lHaS0nHzmeJdEsgyuL7wfJdonxYmqqTYvaJSMKADafl5KLxQIjVyZNFCSJz3oZAkRSrnCj8m5MdQ5QncvEPJ0tCfydwQ9KFCrzjbvSknxlOgDQgkzfKJK2l57cL+463o7ehmCK6hppbcZo9hc9+NuyQxrp3f4vNDM2xGSM2Wn4zcpuiqT1aQfkTHE2vV3ZHk0r59ZmtG2kwbN8WwKfZWvs1q10kctv/IJwqo0fp6e/NS781CprQcYz0gaI1M2linKRi/mRE0ZJUrq6vtLwPZ8j2+/WpGoidGkSzOJbvjdMMKNvIijdVhKZlP7EtFNNGhRnewer5G2dwmMbEQ9FZK97800iFFIRhIX6hbNM8dFSPMiStpx1+rF8j85dKizUwVwoV5U/d9AWBEKA27bO9Qji3bwfvyScbzYSyq9X59z/QUWc0V+Pq0W6lLJT7GjwD1R/jvBlhpVMhJbW48n1TMtCwadzryhaoHVY=; NID_JKL=vxqXc/GXOj5ISWT1XKmNVtMmWwM8B2N6H1yoQC5lzV4=",
+  "NNB=AWISKBENXRZGK; SHP_BUCKET_ID=6; spage_uid=; nid_inf=842125062; NID_AUT=oi9w8Tyfie/bLDCwAfV+DJ089c0/AHYJvQG8c46j3d2NfPWGOokrqcGRD5m7eg/A; NID_SES=AAABoAY87wuxM7WkL8GY/eCbYi20PetNynIOQ9/WYIHuoPq+LkJOuMctPdY0/4qhNKwUkWr9uJYF01LaXrMuwu1IZtALdguxe+tROw95cgm0/P61SJ704degRNN/qCVEjSBffqH3tx/PDC6uV7D77/qGcvvRi9y2gys/SzZKs0EwksOOOEPmmfrpygXNGWDWyJUTK1cQm2yiE1FO+IVLM9kG1Wkq3vZJum67wzRi5Je/3fDLsjQCtmb2LH2i9YiFFqyCCFUJAUh43QK9oCiYtSpesvns32c5jLDdSwRmZiAYC5dWoNmhTTeSYLDRnp0H6DVn5hevlgX95q0wMrFo/eOY1SUb+QYO2P0v5jwOpu7A+UWS5CvQeplS+0KndKvG1qQvpAocEM45PZC/I03d2PHwgQ97ihmA7wan+nYMPutczkMW1Xdnh8rJJj1IKD/a8J+5pNolx2t4rajdOGkDtuZnERL5uB24DwXNJsjax8MRnPDHhUcSOtCLwfQbRbadts1+CWMOIgNmQ8Jtos77VOC9aSl2capefX5s8LLKmRm4fYaw; NID_JKL=EeLGQ1tE8/wRapxYy1A4zMQBc6Ul2LbXTs528Rz/3PE=",
+];
+
+// 🎲 랜덤 쿠키 선택 함수
+function getRandomCookie() {
+  return cookieList[Math.floor(Math.random() * cookieList.length)];
+}
+
+// 🔄 규칙을 동적으로 업데이트하고 fetch하는 함수
+async function updateRulesAndFetch(url, referer = null) {
+  if (referer) {
+    // referer가 있을 때: 헤더 + Referer + Cookie 설정
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: [2, 3],
+      addRules: [
+        {
+          id: 2,
+          priority: 1,
+          action: {
+            type: "modifyHeaders",
+            requestHeaders: [
+              {
+                header: "Accept",
+                operation: "set",
+                value: "application/json, text/plain, */*",
+              },
+              {
+                header: "Accept-Encoding",
+                operation: "set",
+                value: "gzip, deflate, br, zstd",
+              },
+              {
+                header: "Accept-Language",
+                operation: "set",
+                value: "ko,en-US;q=0.9,en;q=0.8,ko-KR;q=0.7",
+              },
+              { header: "Sec-Ch-Ua-Mobile", operation: "set", value: "?0" },
+              { header: "Sec-Fetch-Dest", operation: "set", value: "empty" },
+              { header: "Sec-Fetch-Mode", operation: "set", value: "cors" },
+              {
+                header: "Sec-Ch-Ua",
+                operation: "set",
+                value:
+                  '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
+              },
+              {
+                header: "Sec-Fetch-Site",
+                operation: "set",
+                value: "same-origin",
+              },
+              { header: "Referer", operation: "set", value: referer },
+              { header: "Cookie", operation: "set", value: getRandomCookie() },
+            ],
+          },
+          condition: {
+            urlFilter: url,
+            resourceTypes: ["xmlhttprequest"],
+          },
+        },
+      ],
+    });
+  } else {
+    // referer가 없을 때: Smartstore 관련 URL 기본 헤더만 설정
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: [2, 3],
+      addRules: [
+        {
+          id: 2,
+          priority: 1,
+          action: {
+            type: "modifyHeaders",
+            requestHeaders: [
+              {
+                header: "Accept",
+                operation: "set",
+                value: "application/json, text/plain, */*",
+              },
+              {
+                header: "Accept-Encoding",
+                operation: "set",
+                value: "gzip, deflate, br, zstd",
+              },
+              {
+                header: "Accept-Language",
+                operation: "set",
+                value: "ko,en-US;q=0.9,en;q=0.8,ko-KR;q=0.7",
+              },
+              { header: "Sec-Ch-Ua-Mobile", operation: "set", value: "?0" },
+              { header: "Sec-Fetch-Dest", operation: "set", value: "empty" },
+              { header: "Sec-Fetch-Mode", operation: "set", value: "cors" },
+              {
+                header: "Sec-Ch-Ua",
+                operation: "set",
+                value:
+                  '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
+              },
+              {
+                header: "Sec-Fetch-Site",
+                operation: "set",
+                value: "same-origin",
+              },
+              { header: "Cookie", operation: "set", value: getRandomCookie() },
+            ],
+          },
+          condition: {
+            urlFilter: "https://smartstore.naver.com/i/v1/smart-stores?url=*",
+            resourceTypes: ["xmlhttprequest"],
+          },
+        },
+        {
+          id: 3,
+          priority: 1,
+          action: {
+            type: "modifyHeaders",
+            requestHeaders: [
+              {
+                header: "Accept",
+                operation: "set",
+                value: "application/json, text/plain, */*",
+              },
+              {
+                header: "Accept-Encoding",
+                operation: "set",
+                value: "gzip, deflate, br, zstd",
+              },
+              {
+                header: "Accept-Language",
+                operation: "set",
+                value: "ko,en-US;q=0.9,en;q=0.8,ko-KR;q=0.7",
+              },
+              { header: "Sec-Ch-Ua-Mobile", operation: "set", value: "?0" },
+              { header: "Sec-Fetch-Dest", operation: "set", value: "empty" },
+              { header: "Sec-Fetch-Mode", operation: "set", value: "cors" },
+              {
+                header: "Sec-Ch-Ua",
+                operation: "set",
+                value:
+                  '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
+              },
+              {
+                header: "Sec-Fetch-Site",
+                operation: "set",
+                value: "same-origin",
+              },
+              { header: "Cookie", operation: "set", value: getRandomCookie() },
+            ],
+          },
+          condition: {
+            urlFilter:
+              "https://smartstore.naver.com/i/v2/channels/*/products/*?withWindow=*",
+            resourceTypes: ["xmlhttprequest"],
+          },
+        },
+      ],
+    });
+  }
+
+  console.log("네트워크 요청 규칙이 업데이트되었습니다.");
+
+  // fetch 요청 보내기
+  try {
+    const response = await fetch(url, { method: "GET" });
+    const result = await response.json();
+    console.log("API 호출 결과:", result);
+    return result;
+  } catch (error) {
+    console.error("API 호출 중 오류 발생:", error);
+    return null;
+  }
+}
+
+// 확장 프로그램이 설치/업데이트/시작될 때 네트워크 규칙 등록
+chrome.runtime.onInstalled.addListener(async () => {
+  try {
+    // 기본 User-Agent 변경 규칙 추가
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: [1],
+      addRules: [
+        {
+          id: 1,
+          priority: 1,
+          action: {
+            type: "modifyHeaders",
+            requestHeaders: [
+              {
+                header: "User-Agent",
+                operation: "set",
+                value:
+                  "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
+              },
+            ],
+          },
+          condition: {
+            resourceTypes: ["sub_frame", "script"],
+          },
+        },
+      ],
+    });
+
+    console.log("기본 네트워크 요청 규칙이 등록되었습니다.");
+
+    // 테스트 API 호출 - graceuofficial
+    testBrandApi("graceuofficial");
+  } catch (error) {
+    console.error("네트워크 요청 규칙 등록 중 오류 발생:", error);
+  }
+});
+
+// URL에서 브랜드명 추출 함수
+function extractBrandName(url) {
+  if (!url) return null;
+
+  try {
+    // URL 디코딩
+    let decodedUrl = decodeURIComponent(url);
+
+    // outlink URL인 경우 내부 URL 파라미터 추출
+    const outlinkMatch = decodedUrl.match(/outlink\/url\?url=([^&]+)/);
+    if (outlinkMatch && outlinkMatch[1]) {
+      // outlink 내부의 URL 파라미터 추가 디코딩
+      decodedUrl = decodeURIComponent(outlinkMatch[1]);
+    }
+
+    // smartstore.naver.com/ 다음에 오는 부분 추출
+    const match = decodedUrl.match(/smartstore\.naver\.com\/([^&?\/]+)/);
+    if (match && match[1]) {
+      return match[1];
+    }
+    return null;
+  } catch (error) {
+    console.error("브랜드명 추출 중 오류:", error);
+    return null;
+  }
+}
+
+// 브랜드 API 테스트 함수
+async function testBrandApi(brandName) {
+  try {
+    console.log(`브랜드 '${brandName}' API 호출 테스트 시작...`);
+
+    const brandApiUrl = `https://smartstore.naver.com/i/v1/smart-stores?url=${brandName}`;
+    const referer = `https://smartstore.naver.com/${brandName}`;
+
+    // API 호출
+    const result = await updateRulesAndFetch(brandApiUrl, referer);
+
+    if (result) {
+      console.log(`브랜드 '${brandName}' API 호출 성공:`, result);
+    } else {
+      console.warn(`브랜드 '${brandName}' API 호출 실패`);
+    }
+  } catch (error) {
+    console.error(`브랜드 API 테스트 중 오류 발생:`, error);
+  }
+}
+
 // 스마트스토어 API 자동 호출
 (async function fetchSmartStoreApi() {
   try {
@@ -391,245 +650,280 @@ let coupangKeywords = [];
     console.log("몰 타이틀 요소 개수:", pageData.mallTitlesCount);
     console.log("몰 타이틀 요소들:", pageData.mallTitlesData);
 
-    // 탭 닫기
-    // await chrome.tabs.remove(tab.id);
+    // 브랜드명 추출 및 API 호출
+    if (pageData.mallTitlesData && pageData.mallTitlesData.length > 0) {
+      // 각 타이틀에서 브랜드명 추출
+      const brandsData = pageData.mallTitlesData
+        .filter((item) => item.href)
+        .map((item) => {
+          const brandName = extractBrandName(item.href);
+          return {
+            originalHref: item.href,
+            brandName,
+            text: item.text,
+          };
+        })
+        .filter((item) => item.brandName); // null 브랜드명 제외
 
-    // 실제 API 요청
-    const apiUrl =
-      "https://smartstore.naver.com/i/v2/channels/2sWDyg5V9pbfW9tndQeqM/products/5058503892?withWindow=false";
+      console.log("추출된 브랜드명 정보:", brandsData);
 
-    const response = await fetch(apiUrl, {
-      method: "GET",
-      headers: {
-        accept: "application/json, text/plain, */*",
-        "accept-language": "ko,en-US;q=0.9,en;q=0.8,ko-KR;q=0.7",
-        referer: "https://smartstore.naver.com/daizzirong5058503892",
-        "user-agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
-        cookie: pageData.cookie || "",
-      },
-    });
+      // 추출된 브랜드에 대해 API 호출
+      for (const brandData of brandsData) {
+        try {
+          console.log(`브랜드 '${brandData.brandName}' API 호출 시도...`);
+          const brandApiUrl = `https://smartstore.naver.com/i/v1/smart-stores?url=${brandData.brandName}`;
+          const referer = `https://smartstore.naver.com/${brandData.brandName}`;
 
-    if (!response.ok) {
-      throw new Error(`API 요청 실패: ${response.status}`);
+          // 새로운 fetch 함수 사용
+          const result = await updateRulesAndFetch(brandApiUrl, referer);
+
+          if (result) {
+            console.log(`브랜드 '${brandData.brandName}' API 응답:`, result);
+          } else {
+            console.warn(`브랜드 '${brandData.brandName}' API 요청 실패`);
+          }
+
+          // API 호출 간 0.5초 지연 추가
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        } catch (error) {
+          console.error(
+            `브랜드 '${brandData.brandName}' API 호출 중 오류:`,
+            error
+          );
+        }
+      }
     }
 
-    const data = await response.json();
-    console.log("스마트스토어 API 응답:", data);
+    // 탭 닫기
+    await chrome.tabs.remove(tab.id);
+
+    // 기존 API 요청도 updateRulesAndFetch 함수로 변경
+    const apiUrl =
+      "https://smartstore.naver.com/i/v2/channels/2sWDyg5V9pbfW9tndQeqM/products/5058503892?withWindow=false";
+    const result = await updateRulesAndFetch(
+      apiUrl,
+      "https://smartstore.naver.com/daizzirong5058503892"
+    );
+
+    if (result) {
+      console.log("스마트스토어 API 응답:", result);
+    } else {
+      console.warn("스마트스토어 API 요청 실패");
+    }
   } catch (error) {
     console.error("스마트스토어 API 호출 중 오류 발생:", error);
   }
 })();
 
-chrome.runtime.onMessage.addListener(async (message, sender) => {
-  if (message.action === "SCRAPE_NAVER") {
-    // 1. 네이버 쇼핑 API 호출
-    const query = encodeURIComponent(message.query);
-    const apiUrl = `https://whale-ecommerce-website.vercel.app/api/naver-shopping-search-api?query=${query}`;
-    const res = await fetch(apiUrl);
-    const result = await res.json();
-    console.log("result", result);
-    // 2. 메인 상품 페이지만 필터링 (최대 5개)
-    const validItems = result.items
-      .filter((item) => item.link.includes("main/products"))
-      .slice(0, 8);
+// chrome.runtime.onMessage.addListener(async (message, sender) => {
+//   if (message.action === "SCRAPE_NAVER") {
+//     // 1. 네이버 쇼핑 API 호출
+//     const query = encodeURIComponent(message.query);
+//     const apiUrl = `https://whale-ecommerce-website.vercel.app/api/naver-shopping-search-api?query=${query}`;
+//     const res = await fetch(apiUrl);
+//     const result = await res.json();
+//     console.log("result", result);
+//     // 2. 메인 상품 페이지만 필터링 (최대 5개)
+//     const validItems = result.items
+//       .filter((item) => item.link.includes("main/products"))
+//       .slice(0, 8);
 
-    // 3. 스크래핑 함수
-    const scrapeItem = async (item) => {
-      try {
-        const tab = await chrome.tabs.create({ url: item.link, active: false });
+//     // 3. 스크래핑 함수
+//     const scrapeItem = async (item) => {
+//       try {
+//         const tab = await chrome.tabs.create({ url: item.link, active: false });
 
-        // 첫 번째 시도
-        let results = await chrome.scripting.executeScript({
-          target: { tabId: tab.id, allFrames: true },
-          func: () => {
-            return {
-              html: document.documentElement.outerHTML,
-              title: document.title,
-              hasError: document.title.includes("[에러]"),
-            };
-          },
-        });
+//         // 첫 번째 시도
+//         let results = await chrome.scripting.executeScript({
+//           target: { tabId: tab.id, allFrames: true },
+//           func: () => {
+//             return {
+//               html: document.documentElement.outerHTML,
+//               title: document.title,
+//               hasError: document.title.includes("[에러]"),
+//             };
+//           },
+//         });
 
-        // 에러 페이지인 경우 새로고침 시도
-        if (results[0].result.hasError) {
-          console.log("에러 페이지 감지, 새로고침 시도...");
+//         // 에러 페이지인 경우 새로고침 시도
+//         if (results[0].result.hasError) {
+//           console.log("에러 페이지 감지, 새로고침 시도...");
 
-          // 새로고침 버튼 클릭
-          await chrome.scripting.executeScript({
-            target: { tabId: tab.id, allFrames: true },
-            func: () => {
-              const refreshButton =
-                document.querySelector("a.button.highlight");
-              if (refreshButton) {
-                refreshButton.click();
-                return true;
-              }
-              return false;
-            },
-          });
+//           // 새로고침 버튼 클릭
+//           await chrome.scripting.executeScript({
+//             target: { tabId: tab.id, allFrames: true },
+//             func: () => {
+//               const refreshButton =
+//                 document.querySelector("a.button.highlight");
+//               if (refreshButton) {
+//                 refreshButton.click();
+//                 return true;
+//               }
+//               return false;
+//             },
+//           });
 
-          // 새로고침 후 2초 대기
-          await new Promise((resolve) => setTimeout(resolve, 200));
+//           // 새로고침 후 2초 대기
+//           await new Promise((resolve) => setTimeout(resolve, 200));
 
-          // 새로고침된 페이지에서 다시 HTML 가져오기
-          results = await chrome.scripting.executeScript({
-            target: { tabId: tab.id, allFrames: true },
-            func: () => {
-              return {
-                html: document.documentElement.outerHTML,
-                title: document.title,
-                hasError: document.title.includes("[에러]"),
-              };
-            },
-          });
-        }
+//           // 새로고침된 페이지에서 다시 HTML 가져오기
+//           results = await chrome.scripting.executeScript({
+//             target: { tabId: tab.id, allFrames: true },
+//             func: () => {
+//               return {
+//                 html: document.documentElement.outerHTML,
+//                 title: document.title,
+//                 hasError: document.title.includes("[에러]"),
+//               };
+//             },
+//           });
+//         }
 
-        // 메타 태그에서 키워드 추출
-        const keywords = await chrome.scripting.executeScript({
-          target: { tabId: tab.id, allFrames: true },
-          func: () => {
-            return (
-              document
-                .querySelector('meta[name="keywords"]')
-                ?.getAttribute("content") || null
-            );
-          },
-        });
+//         // 메타 태그에서 키워드 추출
+//         const keywords = await chrome.scripting.executeScript({
+//           target: { tabId: tab.id, allFrames: true },
+//           func: () => {
+//             return (
+//               document
+//                 .querySelector('meta[name="keywords"]')
+//                 ?.getAttribute("content") || null
+//             );
+//           },
+//         });
 
-        // 탭 닫기
-        setTimeout(() => {
-          chrome.tabs.remove(tab.id);
-        }, 2000);
+//         // 탭 닫기
+//         setTimeout(() => {
+//           chrome.tabs.remove(tab.id);
+//         }, 2000);
 
-        if (keywords[0].result) {
-          return {
-            productTitle: item.title,
-            link: item.link,
-            keywords: keywords[0].result,
-          };
-        }
-        return null;
-      } catch (err) {
-        console.error(`Error scraping ${item.link}:`, err);
-        return null;
-      }
-    };
+//         if (keywords[0].result) {
+//           return {
+//             productTitle: item.title,
+//             link: item.link,
+//             keywords: keywords[0].result,
+//           };
+//         }
+//         return null;
+//       } catch (err) {
+//         console.error(`Error scraping ${item.link}:`, err);
+//         return null;
+//       }
+//     };
 
-    // 4. 순차적으로 스크래핑 실행
-    const scrapedResults = [];
+//     // 4. 순차적으로 스크래핑 실행
+//     const scrapedResults = [];
 
-    for (let i = 0; i < validItems.length; i++) {
-      const item = validItems[i];
+//     for (let i = 0; i < validItems.length; i++) {
+//       const item = validItems[i];
 
-      const result = await scrapeItem(item);
-      if (result) {
-        scrapedResults.push(result);
-      }
-      // 마지막 상품이 아니면 500ms 대기
-      if (i < validItems.length - 1) {
-        await new Promise((resolve) =>
-          setTimeout(resolve, Math.floor(Math.random() * 501) + 300)
-        );
-      }
-    }
+//       const result = await scrapeItem(item);
+//       if (result) {
+//         scrapedResults.push(result);
+//       }
+//       // 마지막 상품이 아니면 500ms 대기
+//       if (i < validItems.length - 1) {
+//         await new Promise((resolve) =>
+//           setTimeout(resolve, Math.floor(Math.random() * 501) + 300)
+//         );
+//       }
+//     }
 
-    // 5. 키워드 빈도 분석
-    const keywordFrequency = {};
-    const keywordSources = {};
+//     // 5. 키워드 빈도 분석
+//     const keywordFrequency = {};
+//     const keywordSources = {};
 
-    scrapedResults.forEach((result) => {
-      if (!result.keywords) return;
+//     scrapedResults.forEach((result) => {
+//       if (!result.keywords) return;
 
-      // 앞에서부터 10개 키워드만 사용
-      const keywords = result.keywords
-        .split(",")
-        .map((k) => k.trim())
-        .filter((k) => k.length > 0) // 빈 문자열 필터링
-        .slice(0, 10); // 앞에서부터 10개만 사용
+//       // 앞에서부터 10개 키워드만 사용
+//       const keywords = result.keywords
+//         .split(",")
+//         .map((k) => k.trim())
+//         .filter((k) => k.length > 0) // 빈 문자열 필터링
+//         .slice(0, 10); // 앞에서부터 10개만 사용
 
-      const keywordCount = keywords.length;
+//       const keywordCount = keywords.length;
 
-      keywords.forEach((keyword) => {
-        if (!keywordFrequency[keyword]) {
-          keywordFrequency[keyword] = 0;
-          keywordSources[keyword] = [];
-        }
-        keywordFrequency[keyword]++;
-        keywordSources[keyword].push({
-          count: keywordCount,
-          productTitle: result.productTitle,
-        });
-      });
-    });
-    // 6. 키워드 정렬 (빈도수 + 우선순위)
-    const sortedKeywords = Object.entries(keywordFrequency)
-      .map(([keyword, frequency]) => ({
-        keyword,
-        frequency,
-        sources: keywordSources[keyword],
-      }))
-      .sort((a, b) => {
-        // 빈도수가 다르면 빈도수로 정렬
-        if (a.frequency !== b.frequency) {
-          return b.frequency - a.frequency;
-        }
+//       keywords.forEach((keyword) => {
+//         if (!keywordFrequency[keyword]) {
+//           keywordFrequency[keyword] = 0;
+//           keywordSources[keyword] = [];
+//         }
+//         keywordFrequency[keyword]++;
+//         keywordSources[keyword].push({
+//           count: keywordCount,
+//           productTitle: result.productTitle,
+//         });
+//       });
+//     });
+//     // 6. 키워드 정렬 (빈도수 + 우선순위)
+//     const sortedKeywords = Object.entries(keywordFrequency)
+//       .map(([keyword, frequency]) => ({
+//         keyword,
+//         frequency,
+//         sources: keywordSources[keyword],
+//       }))
+//       .sort((a, b) => {
+//         // 빈도수가 다르면 빈도수로 정렬
+//         if (a.frequency !== b.frequency) {
+//           return b.frequency - a.frequency;
+//         }
 
-        // 빈도수가 같으면 (특히 1인 경우) 키워드가 많은 메타태그 우선
-        const aMaxSourceCount = Math.max(...a.sources.map((s) => s.count));
-        const bMaxSourceCount = Math.max(...b.sources.map((s) => s.count));
+//         // 빈도수가 같으면 (특히 1인 경우) 키워드가 많은 메타태그 우선
+//         const aMaxSourceCount = Math.max(...a.sources.map((s) => s.count));
+//         const bMaxSourceCount = Math.max(...b.sources.map((s) => s.count));
 
-        if (a.frequency === 1 && b.frequency === 1) {
-          // 빈도수가 1인 경우, 15개 이상 키워드를 가진 메타태그 우선
-          const aHasManyKeywords = aMaxSourceCount >= 15;
-          const bHasManyKeywords = bMaxSourceCount >= 15;
-          if (aHasManyKeywords !== bHasManyKeywords) {
-            return bHasManyKeywords - aHasManyKeywords;
-          }
-        }
+//         if (a.frequency === 1 && b.frequency === 1) {
+//           // 빈도수가 1인 경우, 15개 이상 키워드를 가진 메타태그 우선
+//           const aHasManyKeywords = aMaxSourceCount >= 15;
+//           const bHasManyKeywords = bMaxSourceCount >= 15;
+//           if (aHasManyKeywords !== bHasManyKeywords) {
+//             return bHasManyKeywords - aHasManyKeywords;
+//           }
+//         }
 
-        return bMaxSourceCount - aMaxSourceCount;
-      })
-      .map((item) => item.keyword);
-    // 7. 결과를 content script로 전달
-    naverKeywords = sortedKeywords.slice(0, 10);
-    chrome.tabs.sendMessage(sender.tab.id, {
-      type: "SCRAPING_RESULTS",
-      naverKeywords,
-      coupangKeywords,
-      rawNaverKeywords: sortedKeywords,
-    });
-  } else if (message.action === "SCRAPE_COUPANG") {
-    const query = encodeURIComponent(message.query);
-    const url = `https://www.coupang.com/np/search?q=${query}&channel=recent`;
+//         return bMaxSourceCount - aMaxSourceCount;
+//       })
+//       .map((item) => item.keyword);
+//     // 7. 결과를 content script로 전달
+//     naverKeywords = sortedKeywords.slice(0, 10);
+//     chrome.tabs.sendMessage(sender.tab.id, {
+//       type: "SCRAPING_RESULTS",
+//       naverKeywords,
+//       coupangKeywords,
+//       rawNaverKeywords: sortedKeywords,
+//     });
+//   } else if (message.action === "SCRAPE_COUPANG") {
+//     const query = encodeURIComponent(message.query);
+//     const url = `https://www.coupang.com/np/search?q=${query}&channel=recent`;
 
-    try {
-      const tab = await chrome.tabs.create({ url, active: false });
-      const results = await chrome.scripting.executeScript({
-        target: { tabId: tab.id, allFrames: true },
-        func: () => {
-          const keywordElements = document.querySelectorAll("[data-keyword]");
-          return Array.from(keywordElements).map((el) =>
-            el.getAttribute("data-keyword")
-          );
-        },
-      });
-      await chrome.tabs.remove(tab.id);
+//     try {
+//       const tab = await chrome.tabs.create({ url, active: false });
+//       const results = await chrome.scripting.executeScript({
+//         target: { tabId: tab.id, allFrames: true },
+//         func: () => {
+//           const keywordElements = document.querySelectorAll("[data-keyword]");
+//           return Array.from(keywordElements).map((el) =>
+//             el.getAttribute("data-keyword")
+//           );
+//         },
+//       });
+//       await chrome.tabs.remove(tab.id);
 
-      if (results?.[0]?.result) {
-        coupangKeywords = results[0].result.slice(0, 10);
+//       if (results?.[0]?.result) {
+//         coupangKeywords = results[0].result.slice(0, 10);
 
-        // 네이버 결과가 이미 있다면 content script로 전달
-        if (naverKeywords.length > 0) {
-          chrome.tabs.sendMessage(sender.tab.id, {
-            type: "SCRAPING_RESULTS",
-            naverKeywords,
-            coupangKeywords,
-          });
-        }
-      }
-    } catch (err) {
-      console.error("쿠팡 스크래핑 에러:", err);
-    }
-  }
-});
+//         // 네이버 결과가 이미 있다면 content script로 전달
+//         if (naverKeywords.length > 0) {
+//           chrome.tabs.sendMessage(sender.tab.id, {
+//             type: "SCRAPING_RESULTS",
+//             naverKeywords,
+//             coupangKeywords,
+//           });
+//         }
+//       }
+//     } catch (err) {
+//       console.error("쿠팡 스크래핑 에러:", err);
+//     }
+//   }
+// });
